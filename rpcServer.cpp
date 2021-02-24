@@ -52,7 +52,7 @@ bool RpcHttpServer::onRequest(PHttpServerRequest &req, const std::string_view &v
 							req->log("[RPC] ", str);
 						});
 						auto revTime = req->getRecvTime();
-						this->reportRequest(rpcreq.getMethodName().getString(),
+						this->reportRequest(rpcreq.getMethodName().getString(),							
 								std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-revTime).count());
 						stream.flushAsync([req = std::move(req)](Stream &, bool){});
 						return true;
@@ -110,7 +110,7 @@ bool RpcHttpServer::cmpMethod(const MethodStats &a, const MethodStats &b) {
 	return a.name < b.name;
 }
 
-void RpcHttpServer::reportRequest(const json::String &methodName, std::size_t mstime) {
+void RpcHttpServer::reportRequest(const json::String &methodName, std::uint64_t mstime) {
 	std::lock_guard _(statsLock);
 	MethodStats s{methodName,1, mstime};
 	auto iter = std::lower_bound(stats.begin(), stats.end(), s, cmpMethod);

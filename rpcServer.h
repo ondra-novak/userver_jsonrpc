@@ -20,7 +20,7 @@ public:
 		bool enableConsole = true;
 		bool enableWS = true;
 		bool enableDirect = true;
-		std::size_t maxReqSize = 0;
+		std::size_t maxReqSize = ~static_cast<std::size_t>(0);
 	};
 
 
@@ -44,13 +44,13 @@ protected:
 	struct MethodStats {
 		json::String name;
 		std::size_t requests;
-		std::size_t mstime;
+		std::uint64_t mstime;
 	};
 
 	std::vector<MethodStats> stats;
 	std::mutex statsLock;
 
-	void reportRequest(const json::String &methodName, std::size_t mstime);
+	void reportRequest(const json::String &methodName, std::uint64_t  mstime);
 
 
 	static bool cmpMethod(const MethodStats &a, const MethodStats &b);
