@@ -43,20 +43,33 @@ bool RpcHttpServer::onRequest(PHttpServerRequest &req, const std::string_view &v
 	if (method == "POST") {
 		auto p = req.get();
 		p->readBodyAsync(maxReqSize, [this, req = std::move(req)](const std::string_view &data) mutable {
-			RpcRequest rpcreq = RpcRequest::create(RpcRequest::ParseRequest(json::Value::fromString(data)),
-					[req = std::move(req), this](json::Value response, json::RpcRequest rpcreq) mutable {
-						req->setContentType("application/json");
-						auto stream = req->send();
-						response.serialize([&](char c){stream.putChar(c);});
-						handleLogging(response, rpcreq, [&](const std::string_view &str){
-							req->log("[RPC] ", str);
-						});
-						auto revTime = req->getRecvTime();
-						this->reportRequest(rpcreq.getMethodName().getString(),
-								std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-revTime).count());
-						stream.flushAsync([req = std::move(req)](Stream &, bool){});
+			json::Value jrq = json::Value::fromString(data);
+			req->setContentType("application/json");
+			auto stream = req->send();
+
+			RpcRequest rpcreq = RpcRequest::create(RpcRequest::ParseRequest(jrq),
+					[req = std::move(req), stream = std::move(stream), this](json::Value response, json::RpcRequest rpcreq) mutable {
+						if (response.defined()) {
+							response.serialize([&](char c){stream.putChar(c);});
+							handleLogging(response, rpcreq, [&](const std::string_view &str){
+								req->log("[RPC] ", str);
+							});
+							auto revTime = req->getRecvTime();
+							this->reportRequest(rpcreq.getMethodName().getString(),
+									std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-revTime).count());
+							if (response["error"].defined() || response["result"].defined()) {
+								stream.flushAsync([req = std::move(req)](Stream &s, bool){
+									s.closeOutput();
+								});
+							} else {
+								stream.flush();
+							}
+						} else {
+							stream.writeNB("\r\n");
+							stream.flush();
+						}
 						return true;
-			}, 0);
+			}, json::RpcFlags::preResponseNotify);
 			exec(rpcreq);
 		});
 		return true;
