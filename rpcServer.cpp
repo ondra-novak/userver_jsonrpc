@@ -68,7 +68,7 @@ bool RpcHttpServer::onRequest(PHttpServerRequest &req, const std::string_view &v
 							stream.writeNB("\r\n");
 							stream.flush();
 						}
-						return true;
+					return true;
 			}, json::RpcFlags::preResponseNotify);
 			exec(rpcreq);
 		});
@@ -123,7 +123,7 @@ bool RpcHttpServer::cmpMethod(const MethodStats &a, const MethodStats &b) {
 	return a.name < b.name;
 }
 
-void RpcHttpServer::reportRequest(const json::String &methodName, std::size_t mstime) {
+void RpcHttpServer::reportRequest(const json::String &methodName, std::uint64_t mstime) {
 	std::lock_guard _(statsLock);
 	MethodStats s{methodName,1, mstime};
 	auto iter = std::lower_bound(stats.begin(), stats.end(), s, cmpMethod);

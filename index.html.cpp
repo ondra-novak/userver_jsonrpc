@@ -550,6 +550,9 @@ function outputError(d,result) {
 	}
 }
 
+)html" /* microsoft compatibility*/
+	R"html(
+
 function formatJson(json) {	
 	var d;
 
