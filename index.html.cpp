@@ -14,7 +14,7 @@ Resource client_index_html = {
 <meta charset="utf-8">
 <title>RPC Console</title>
 </head>
-<body onload="start()">
+<body onload="start();">
 <script type="text/javascript" src="rpc.js"></script>
 <div id="themeToggle">
 <div class="output" id="output"></div>
@@ -48,6 +48,7 @@ Resource client_index_html = {
 <script type="text/javascript">
 "use strict";
 function start() {
+	window.addEventListener("beforeunload",unload);
 	var rpc = new RpcClient("");
 	var input = window.input;
 	var tabpressed = false;
@@ -639,6 +640,12 @@ function parseContextChange(cmd) {
 	} else {
 		return null;
 	}
+}
+
+function unload(e) {
+  	e.preventDefault();
+    e.returnValue = "Really exit...?";
+	return "Really exit...?";
 }
 
 </script>
