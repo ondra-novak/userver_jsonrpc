@@ -52,7 +52,7 @@ bool RpcHttpServer::onRequest(PHttpServerRequest &req, const std::string_view &v
 						if (response.defined()) {
 							response.serialize([&](char c){stream.putChar(c);});
 							handleLogging(response, rpcreq, [&](const std::string_view &str){
-								req->log("[RPC] ", str);
+								req->log(LogLevel::progress, "[RPC] ", str);
 							});
 							auto revTime = req->getRecvTime();
 							this->reportRequest(rpcreq.getMethodName().getString(),
