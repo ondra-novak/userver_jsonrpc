@@ -148,10 +148,10 @@ void RpcHttpServer::addStats(std::string_view path, std::function<json::Value()>
 
 		std::lock_guard _(statsLock);
 		for (const auto &x: stats) {
-			mstats.set(x.name, json::Object
-					("req",x.requests)
-					("time", x.mstime)
-					("avg",	static_cast<double>(x.mstime)/static_cast<double>(x.requests)));
+			mstats.set(x.name, json::Object{
+				{"req",x.requests},
+				{"time", x.mstime},
+				{"avg",	static_cast<double>(x.mstime)/static_cast<double>(x.requests)}});
 		}
 		statObj.set("server", mstats);
 
