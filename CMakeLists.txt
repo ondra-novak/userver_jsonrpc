@@ -4,5 +4,6 @@ add_library (userver_jsonrpc
 	index.html.cpp
 	rpc.js.cpp
 	rpcServer.cpp
+	rpcClient.cpp		
 	styles.css.cpp
 )
