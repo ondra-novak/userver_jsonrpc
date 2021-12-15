@@ -22,6 +22,7 @@ HttpJsonRpcClient::HttpJsonRpcClient(HttpClientCfg &&cfg, std::string url, json:
 void HttpJsonRpcClient::setHeaders(std::vector<HttpClient::HeaderPair> &&headers) {
 	headers.push_back({"Accept","application/json"});
 	headers.push_back({"Content-Type","application/json"});
+	this->headers = std::move(headers);
 }
 
 void HttpJsonRpcClient::sendRequest(const Value &id, const json::Value &request) {
@@ -36,7 +37,11 @@ void HttpJsonRpcClient::sendRequest(const Value &id, const json::Value &request)
 	auto me = async_me.lock();
 	if (me == nullptr) {
 		auto resp = httpc.POST(url, headers, buffer);
-		parseResponse(id, *resp);
+		if (resp == nullptr) {
+			cancelPendingCall(id, RpcResult::makeError(-1, "", Value()));
+		} else {
+			parseResponse(id, *resp);
+		}
 	} else {
 		httpc.POST(url, headers, buffer, [id = Value(id), me](std::unique_ptr<HttpClientRequest> &&req){
 			me->parseResponseAsync(id, std::move(req));
