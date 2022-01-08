@@ -41,8 +41,7 @@ bool RpcHttpServer::onRequest(PHttpServerRequest &req, const std::string_view &v
 	auto method = req->getMethod();
 	QueryParser qp(vpath);
 	if (method == "POST") {
-		auto p = req.get();
-		p->readBodyAsync(maxReqSize, [this, req = std::move(req)](const std::string_view &data) mutable {
+			req->readBody(req, maxReqSize) >> [this](PHttpServerRequest &req, const std::string_view &data) mutable {
 			json::Value jrq = json::Value::fromString(data);
 			req->setContentType("application/json");
 			auto stream = req->send();
@@ -58,9 +57,9 @@ bool RpcHttpServer::onRequest(PHttpServerRequest &req, const std::string_view &v
 							this->reportRequest(rpcreq.getMethodName().getString(),
 									std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-revTime).count());
 							if (response["error"].defined() || response["result"].defined()) {
-								stream.flushAsync([req = std::move(req)](Stream &s, bool){
+								stream.flush() >> [req = std::move(req)](Stream &s, bool){
 									s.closeOutput();
-								});
+								};
 							} else {
 								stream.flush();
 							}
@@ -71,7 +70,7 @@ bool RpcHttpServer::onRequest(PHttpServerRequest &req, const std::string_view &v
 					return true;
 			}, json::RpcFlags::preResponseNotify);
 			exec(rpcreq);
-		});
+		};
 		return true;
 
 
@@ -165,7 +164,7 @@ void RpcHttpServer::addStats(std::string_view path, std::function<json::Value()>
 
 bool RpcHttpServer::onConnect(Stream &s) {
 	if (enableDirect) {
-		s.readAsync([=](Stream &s, std::string_view data) {
+		s.read() >> [=](Stream &s, std::string_view data) {
 			if (data.empty()) return;
 			while (!data.empty() && isspace(data[0])) {
 				data = data.substr(1);
@@ -181,7 +180,7 @@ bool RpcHttpServer::onConnect(Stream &s) {
 					process(std::move(s));
 				}
 			}
-		});
+		};
 		return true;
 	} else {
 		return false;
@@ -199,7 +198,7 @@ void RpcHttpServer::addRPCPath(std::string_view path, const Config &cfg) {
 }
 
 void RpcHttpServer::processDirectAsync(std::shared_ptr<Stream> s) {
-	s->readAsync([s,this](std::string_view data){
+	s->read() >> [s, this](std::string_view data){
 		if (data.empty()) return;
 		while (!data.empty() && isspace(data[0])) {
 			data = data.substr(1);
@@ -211,7 +210,7 @@ void RpcHttpServer::processDirectAsync(std::shared_ptr<Stream> s) {
 			s->putBack(data);
 			processDirect(s);
 		}
-	});
+	};
 }
 
 void RpcHttpServer::processDirect(std::shared_ptr<Stream> s) {
